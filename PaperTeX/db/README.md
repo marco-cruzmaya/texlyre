@@ -36,8 +36,9 @@ archivos real sigue siendo la fuente de verdad; SQLite lo indexa.
 ## Configuracion
 
 - Modo WAL, para que la lectura no bloquee la escritura durante compilaciones.
-- FTS5 para busqueda de texto. Verificado en este equipo: SQLite 3.50.2 del
-  sistema incluye FTS5.
+- FTS5 para busqueda de texto. El interprete que instala `uv` trae su propia
+  copia de SQLite con FTS5 incluido, asi que no depende de la version del
+  sistema ni cambia entre equipos.
 
 ## Respaldos
 

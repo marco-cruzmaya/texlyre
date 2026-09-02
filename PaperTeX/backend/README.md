@@ -9,8 +9,12 @@ instalacion definido en `PAPERTEX_TOKEN`.
 ## Interprete
 
 Python 3.13, fijado en `.python-version` y gestionado con `uv`. Django 5.2 es
-LTS pero no soporta Python 3.14, que es la version del sistema en este equipo:
-por eso la version se fija de forma explicita.
+LTS y no soporta Python 3.14, asi que la version se fija de forma explicita en
+lugar de depender del interprete del sistema, que cambia entre equipos.
+
+`uv` descarga un interprete propio, identico en Linux, macOS y Windows, junto
+con `uv.lock`. Eso hace que un clon nuevo obtenga exactamente las mismas
+versiones sin compilar nada.
 
 ```bash
 uv python install 3.13
@@ -27,8 +31,8 @@ el entorno y **si** se versiona.
 - sesiones persistentes de la aplicacion;
 - persistencia en SQLite;
 - operaciones de Git mediante el CLI real;
-- compilacion nativa de LaTeX y descubrimiento de perfiles de compilador;
-- gestion de procesos LSP (TexLab);
+- perfiles de compilacion, descubrimiento e historial de trabajos;
+- ejecucion del proveedor `native` cuando hay TeX instalado localmente;
 - extraccion y procesamiento de PDFs;
 - resolucion de bibliografia;
 - ejecucion de Codex CLI y Ollama, con control de permisos;
@@ -36,6 +40,18 @@ el entorno y **si** se versiona.
 
 El trabajo de larga duracion pasa por un supervisor de trabajos local. No se
 introduce Celery ni Redis.
+
+## Lo que el backend NO hace
+
+**No supervisa procesos de compiladores ni de servidores de lenguaje.** Esa es
+la funcion de las recetas de Chelys y de los contenedores de
+`PaperTeX/docker/`, que ya exponen un puente WebSocket. Reimplementar esa
+gestion seria duplicar trabajo de upstream.
+
+El backend registra perfiles, descubre lo disponible en el equipo y guarda el
+historial de trabajos; el frontend habla el protocolo de tipografiado
+directamente con el puente. Ver
+[apps/compilers/providers/README.md](apps/compilers/providers/README.md).
 
 ## Estructura
 

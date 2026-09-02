@@ -36,64 +36,61 @@ correcciones de errores de upstream sin copiar componentes. Ver
 
 ## Requisitos
 
-- Git.
-- [uv](https://docs.astral.sh/uv/) para gestionar el interprete y las
-  dependencias de Python.
-- Python 3.13, instalado con `uv python install 3.13`. Django 5.2 LTS no soporta
-  Python 3.14, por eso la version queda fijada en `backend/.python-version`.
-- Node.js `>=22` y npm.
-- MiKTeX en Windows, accesible desde WSL. En este equipo esta verificado en
-  `/mnt/c/Users/marco/AppData/Local/Programs/MiKTeX/miktex/bin/x64`.
-- Opcional: Docker Engine con Docker Compose v2, solo para servicios auxiliares
-  como TexLab u Ollama. PaperTeX no lo necesita para funcionar.
+Obligatorios:
 
-No se requiere una instalacion de TeX Live en WSL: es un proveedor de
-compilacion futuro y opcional.
+- Git.
+- Node.js `>=22` y npm.
+- [uv](https://docs.astral.sh/uv/). Si no lo tienes, `scripts/setup.sh` lo
+  instala por ti.
+
+Eso es todo. `uv` descarga Python 3.13 y las dependencias; no hace falta
+compilar nada ni instalar Python en el sistema.
+
+Opcionales, para compilar mas rapido o con TeX completo:
+
+- Docker Engine con Compose v2, para el contenedor de TeX Live.
+- Una instalacion local de TeX: TeX Live en Linux, MacTeX en macOS, MiKTeX o
+  TeX Live en Windows. `scripts/setup.sh` la detecta sola.
+
+**No necesitas instalar LaTeX para usar PaperTeX.** El proveedor por omision
+compila con los motores WASM de TeXlyre dentro del navegador.
 
 ## Inicio rapido
 
 Los comandos se ejecutan desde `PaperTeX/`, salvo que se indique lo contrario.
 
-### 1. Configura el entorno
+### 1. Un solo comando
 
 ```bash
-cp .env.example .env
+./scripts/setup.sh
 ```
 
-`.env` no se versiona. Revisa `MIKTEX_BIN_PATH` y genera `PAPERTEX_TOKEN`:
+Instala `uv` si falta, descarga Python 3.13, sincroniza las dependencias, crea
+`.env` a partir de `.env.example`, genera el token de la instalacion y detecta
+que proveedores de compilacion ofrece este equipo. Se puede volver a ejecutar
+sin riesgo: nunca sobrescribe un valor que ya exista en `.env`.
 
-```bash
-python3 -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-### 2. Verifica las herramientas del equipo
+### 2. Revisa lo detectado
 
 ```bash
 ./scripts/backend/preflight_toolchain.sh
 ```
 
-Comprueba `uv`, Python 3.13, Node, Git y que los ejecutables de MiKTeX
-respondan desde WSL. Resuelve lo que reporte como faltante antes de continuar.
-
-### 3. Prepara el backend
+### 3. Levanta los servicios
 
 ```bash
-./scripts/backend/init_venv.sh
-./scripts/db/reset.sh
-./scripts/backend/runserver.sh
+./scripts/backend/runserver.sh     # API en http://127.0.0.1:8000
+./scripts/frontend/dev.sh          # interfaz en http://localhost:5174
 ```
 
-La API queda disponible en `http://127.0.0.1:8000`.
-
-### 4. Inicia el frontend
-
-En otra terminal:
+### 4. Opcional: TeX Live en contenedor
 
 ```bash
-./scripts/frontend/dev.sh
+docker compose -f docker/texlive_container.yaml up -d
 ```
 
-Vite sirve la aplicacion en `http://localhost:5174`.
+Da una instalacion de TeX identica en cualquier equipo. Ver
+[docker/README.md](docker/README.md).
 
 ## Puertos
 
@@ -106,11 +103,28 @@ comportamientos.
 | TeXlyre upstream (Vite) | `http://localhost:5173` | upstream, no usar |
 | PaperTeX frontend (Vite) | `http://localhost:5174` | PaperTeX |
 | Backend Django (ASGI) | `http://127.0.0.1:8000` | PaperTeX |
-| TexLab (WebSocket) | `ws://127.0.0.1:7658` | PaperTeX |
+| Puente de tipografiado (TeX Live) | `ws://127.0.0.1:7045` | receta de Chelys |
+| TexLab LSP | `ws://127.0.0.1:7031` | receta de Chelys |
 | Ollama (opcional) | `http://127.0.0.1:11434` | externo |
 
 El backend se enlaza solo a loopback. PaperTeX es una herramienta personal y no
 debe exponerse en la red.
+
+## Proveedores de compilacion
+
+| Proveedor | Requisitos | Igual en todos los equipos | Cuando usarlo |
+| --- | --- | --- | --- |
+| `browser` | ninguno | si | Por omision. Funciona en un clon recien hecho y sin red. |
+| `bridge` | Docker, o un servidor | si | TeX Live completo y reproducible. |
+| `native` | TeX instalado | no | Maxima velocidad; MiKTeX instala paquetes bajo demanda. |
+
+`bridge` no distingue entre un contenedor local y un compilador remoto: es el
+mismo protocolo sobre WebSocket y solo cambia la URL. Ver
+[backend/apps/compilers/providers/README.md](backend/apps/compilers/providers/README.md).
+
+Las rutas absolutas de los ejecutables son configuracion de esta instalacion y
+viven en SQLite y en `.env`. Los espacios de trabajo solo guardan el nombre de
+la receta, para que sigan siendo portables entre equipos.
 
 ## Autoridad del sistema de archivos
 
@@ -131,12 +145,12 @@ abre desde cualquier carpeta real del sistema.
 
 ## Problemas frecuentes
 
-- **Un puerto ya esta en uso:** libera o cambia `5174`, `8000` o `7658` antes de
-  iniciar los servicios. Si `5173` esta ocupado suele ser el TeXlyre upstream
-  corriendo en paralelo, lo cual es esperado.
-- **No se encuentra MiKTeX:** confirma que `MIKTEX_BIN_PATH` en `.env` apunta a
-  la carpeta `miktex/bin/x64` de tu instalacion de Windows y que
-  `"$MIKTEX_BIN_PATH/pdflatex.exe" --version` responde desde WSL.
+- **Un puerto ya esta en uso:** libera o cambia `5174`, `8000`, `7045` o `7031`
+  antes de iniciar los servicios. Si `5173` esta ocupado suele ser el TeXlyre
+  upstream corriendo en paralelo, lo cual es esperado.
+- **No se detecta el TeX local:** no es un error. PaperTeX compila igual con el
+  proveedor `browser`. Si quieres usar el TeX del equipo, pon la ruta de los
+  binarios en `TEX_BIN_PATH` dentro de `.env` y vuelve a ejecutar el preflight.
 - **Falla la creacion del entorno de Python:** verifica que `uv` este instalado
   y que `uv python install 3.13` haya terminado correctamente. Django 5.2 no
   funciona con Python 3.14.
