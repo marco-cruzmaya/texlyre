@@ -1,0 +1,33 @@
+# Entorno local. Contiene rutas absolutas de la maquina y el token de la
+# instalacion; nunca debe versionarse. Usa .env.example como plantilla.
+.env
+
+# Entornos virtuales y bytecode de Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Base de datos local de PaperTeX. Guarda sesiones, anotaciones, procedencia
+# e historial de trabajos: es estado de una instalacion, no del proyecto.
+db/*.sqlite3
+db/*.sqlite3-wal
+db/*.sqlite3-shm
+
+# Respaldos de la base local. Llevan datos reales de investigacion --
+# anotaciones, notas y procedencia de documentos -- y no se deshacen con un
+# commit posterior una vez que entran en la historia. Los genera
+# scripts/db/backup.sh.
+db/backups/*
+!db/backups/.gitkeep
+
+# Cliente TypeScript generado desde el esquema OpenAPI. Es un artefacto de
+# build del backend, no codigo fuente.
+contracts/generated/
+
+# Logs locales
+*.log
+logs/
+
+# node_modules, dist, coverage y *.local ya estan cubiertos por el .gitignore
+# raiz de TeXlyre, que los declara sin diagonal inicial y por lo tanto aplica
+# a cualquier profundidad. No los dupliques aqui.
