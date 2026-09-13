@@ -36,6 +36,10 @@ src/plugins/
 
 # Editor directories and files
 .vscode/*
+.codex/
+.claude/
+.ai/
+.github/*
 !.vscode/extensions.json
 .idea
 .DS_Store
