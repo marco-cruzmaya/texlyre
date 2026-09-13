@@ -48,3 +48,10 @@ src/plugins/
 *.njsproj
 *.sln
 *.sw?
+
+# AI
+.ai/
+.claude/
+.codex/
+.github/agents/*
+.github/skills/*

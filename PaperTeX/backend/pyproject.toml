@@ -1,0 +1,33 @@
+# Dependencias declaradas, no instaladas. El scaffold inicial no crea el
+# entorno ni genera uv.lock; eso ocurre en la siguiente tarea con:
+#
+#   ./scripts/backend/init_venv.sh
+[project]
+name = "papertex-backend"
+version = "0.1.0"
+description = "Servicio companion local de PaperTeX: filesystem, SQLite, Git, LaTeX, LSP, PDF y AI"
+requires-python = ">=3.13,<3.14"
+
+dependencies = [
+    # Django 5.2 es LTS (soporte hasta abril de 2028). No soporta Python 3.14,
+    # por eso el interprete queda fijado en 3.13 via .python-version.
+    "django>=5.2,<5.3",
+    "djangorestframework>=3.15",
+    "channels[daphne]>=4.1",
+    # Genera el esquema OpenAPI del que sale el cliente TypeScript de
+    # contracts/. Ver contracts/README.md.
+    "drf-spectacular>=0.28",
+    # Extraccion de texto y metadatos de PDFs de investigacion.
+    "pymupdf>=1.24",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
